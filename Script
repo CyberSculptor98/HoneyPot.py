@@ -1,0 +1,35 @@
+import socket
+import threading
+
+# Honeypot-Einstellungen
+HONEYPOT_PORT = 9999  # Port, auf dem der Honeypot lauscht
+LOG_FILE = "honeypot.log"  # Datei, in die Ereignisse protokolliert werden
+
+def log_event(event):
+    """Funktion zum Protokollieren von Ereignissen in einer Logdatei."""
+    with open(LOG_FILE, "a") as f:
+        f.write(event + "\n")
+
+def handle_connection(client_socket, client_address):
+    """Funktion zum Behandeln von Verbindungen."""
+    log_event(f"Verbindung von {client_address} hergestellt.")
+    client_socket.send(b"Willkommen! Sie haben sich mit dem Honeypot verbunden.\n")
+    client_socket.close()
+    log_event(f"Verbindung mit {client_address} geschlossen.")
+
+def start_honeypot():
+    """Funktion zum Starten des Honeypots."""
+    # Socket erstellen
+    honeypot_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    honeypot_socket.bind(('0.0.0.0', HONEYPOT_PORT))
+    honeypot_socket.listen(5)
+    log_event(f"Honeypot gestartet. Lausche auf Port {HONEYPOT_PORT}...")
+
+    while True:
+        # Auf Verbindungen warten und diese behandeln
+        client_socket, client_address = honeypot_socket.accept()
+        client_handler = threading.Thread(target=handle_connection, args=(client_socket, client_address))
+        client_handler.start()
+
+if __name__ == "__main__":
+    start_honeypot()
